@@ -39,6 +39,9 @@
 
    # FOR ZSH
    echo 'please' >> ~/.zshrc
+   
+   # FOR FISH
+   set fish_greeting please
    ```
 
 4. That's it! Check if `please` command works in your terminal.
@@ -65,6 +68,9 @@
 
    # FOR ZSH
    echo 'please' >> ~/.zshrc
+   
+   # FOR FISH
+   set fish_greeting please
    ```
 
 5. That's it! Check if `please` command works in your terminal.
