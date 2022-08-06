@@ -35,7 +35,6 @@ def center_print(text, style: str = None, wrap: bool = False) -> None:
         width = shutil.get_terminal_size().columns // 2
     else:
         width = shutil.get_terminal_size().columns
-
     console.print(Align.center(text, style=style, width=width))
 
 
@@ -301,6 +300,8 @@ def setup() -> None:
         typer.style("Do you want me to show you quotes? (y/n)", fg=typer.colors.CYAN))
     if display_quote in ('n,N'):
         config["display_quote"] = False
+    if display_quote in ('y, Y'):
+        config["display_quote"] = True
     
     code_markdown = Markdown(
         """
@@ -323,7 +324,6 @@ def show(ctx: typer.Context) -> None:
     user_name = config["user_name"]
 
     if ctx.invoked_subcommand is None:
-        date_text = ""
         try:
             if config["time_format_24h"] is (None or False):
                 date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
@@ -334,15 +334,13 @@ def show(ctx: typer.Context) -> None:
             write_config(config)
             date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
 
-        try:
-            if config["disable_line"]:
-                center_print(date_text)
-            else:
-                pass
-        except:
-            center_print(Rule(date_text, style="#FFBF00"))
+        
+        if "disable_line" in config.keys() and config["disable_line"] == True:
+            center_print(date_text)
+        else:
+            console.rule(date_text, align="center", style="#FFBF00")
 
-        if config["display_quote"]:
+        if "display_quote" in config.keys() and config["display_quote"] == True:
             quote = getquotes()
             center_print(f'[#63D2FF]"{quote["content"]}[/]', wrap=True)
             center_print(f'[#F03A47][i]- {quote["author"]}[/i][/]\n', wrap=True)
@@ -371,6 +369,5 @@ def main() -> None:
             app()
         else:
             typer.run(setup)
-
 
 main()
