@@ -39,6 +39,9 @@
 
    # FOR ZSH
    echo 'please' >> ~/.zshrc
+   
+   # FOR FISH
+   set fish_greeting please
    ```
 
 4. That's it! Check if `please` command works in your terminal.
@@ -65,6 +68,9 @@
 
    # FOR ZSH
    echo 'please' >> ~/.zshrc
+   
+   # FOR FISH
+   set fish_greeting please
    ```
 
 5. That's it! Check if `please` command works in your terminal.
@@ -77,8 +83,9 @@ Getting a `command not found: please` error? That means the Python modules insta
 To fix this:
 
 ```bash
-echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.profile
+echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.bashrc
 ```
+and restart the terminal.
 
 # 👨‍💻 Commands
 
@@ -119,12 +126,25 @@ please setup
 
 # 🧰 Additional Optional Configuration
 
+![image](https://user-images.githubusercontent.com/25067102/184050404-15c787d5-4b2f-40c5-a2df-0b2892099f1a.png)
+
+## Remove Greeting in please's output
+
+1.Navigate to `~/.config/please`  
+2. Open config.json  
+3. Change `"diable_greeting" from false` to true (All lowercase).\
+
 ## Remove Horizontal Line in please's output
 
 1.Navigate to `~/.config/please`  
 2. Open config.json  
-3. Add `"diable_line": true` at the end (don't forget to add a `,` at the end of the previous line)\
-![](./illustration1.jpg)
+3. Change `"diable_line": false` to true (All lowercase).\
+
+## Remove Quotes in please's output
+
+1.Navigate to `~/.config/please`  
+2. Open config.json  
+3. Change `"diable_quotes" from false` to true (All lowercase).\
 
 # 💻 Local Development
 
