@@ -280,9 +280,10 @@ def setup() -> None:
     console.print(code_markdown)
 
     config["initial_setup_done"] = True
+    config["tasks"] = []
     config["disable_line"] = False
     config["disable_quotes"] = False
-    config["tasks"] = []
+    config["disable_greeting"] = False
     write_config(config)
 
 
@@ -294,15 +295,21 @@ def show(ctx: typer.Context) -> None:
 
     if ctx.invoked_subcommand is None:
         date_text = ""
-        try:
-            if config["time_format_24h"] is (None or False):
-                date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
-            else:
-                date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %H:%M')}[/]"
-        except:
-            config["time_format_24h"] = True
+
+        if "disable_greeting" in config.keys() and config["disable_greeting"] == True:
+            pass
+        else:
+            config["disable_greeting"] = False
             write_config(config)
-            date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
+            try:
+                if config["time_format_24h"] is (None or False):
+                    date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
+                else:
+                    date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %H:%M')}[/]"
+            except:
+                config["time_format_24h"] = True
+                write_config(config)
+                date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
 
         if "disable_line" in config.keys() and config["disable_line"] == True:
             center_print(date_text)
