@@ -304,16 +304,19 @@ def show(ctx: typer.Context) -> None:
             write_config(config)
             date_text = f"[#FFBF00] Hello {user_name}! It's {date_now.strftime('%d %b | %I:%M %p')}[/]"
 
-        try:
-            if config["disable_line"]:
-                center_print(date_text)
-            else:
-                pass
-        except:
-            center_print(Rule(date_text, style="#FFBF00"))
-        quote = getquotes()
-        center_print(f'[#63D2FF]"{quote["content"]}[/]', wrap=True)
-        center_print(f'[#F03A47][i]- {quote["author"]}[/i][/]\n', wrap=True)
+        if "disable_line" in config.keys() and config["disable_line"] == True:
+            center_print(date_text)
+        else:
+            console.rule(date_text, align="center", style="#FFBF00")
+
+        if "disable_quotes" in config.keys() and config["disable_quotes"] == True:
+            pass
+        else:
+            quote = getquotes()
+            center_print(f'[#63D2FF]"{quote["content"]}[/]', wrap=True)
+            center_print(
+                f'[#F03A47][i]- {quote["author"]}[/i][/]\n', wrap=True)
+
         print_tasks()
 
 
@@ -332,8 +335,9 @@ def main() -> None:
         open(os.path.join(config_path, "config.json"), "w")
         typer.run(setup)
     except json.JSONDecodeError:
-        console.print_exception(show_locals=True)
-        center_print("Failed while loading configuration", COLOR_ERROR)
+        center_print(
+            "It seems like the config file is empty. Running the setup wizard again.", COLOR_WARNING)
+        typer.run(setup)
     else:
         if config["initial_setup_done"] is True:
             app()
