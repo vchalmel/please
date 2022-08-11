@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-# from asyncore import write
 import datetime
 import json
 import os
 import random
 import shutil
 from os.path import expanduser
-from re import L
 
 import typer
 from rich.align import Align
@@ -282,6 +280,8 @@ def setup() -> None:
     console.print(code_markdown)
 
     config["initial_setup_done"] = True
+    config["disable_line"] = False
+    config["disable_quotes"] = False
     config["tasks"] = []
     write_config(config)
 
@@ -307,11 +307,15 @@ def show(ctx: typer.Context) -> None:
         if "disable_line" in config.keys() and config["disable_line"] == True:
             center_print(date_text)
         else:
+            config["disable_line"] = False
+            write_config(config)
             console.rule(date_text, align="center", style="#FFBF00")
 
         if "disable_quotes" in config.keys() and config["disable_quotes"] == True:
             pass
         else:
+            config["disable_quotes"] = False
+            write_config(config)
             quote = getquotes()
             center_print(f'[#63D2FF]"{quote["content"]}[/]', wrap=True)
             center_print(
