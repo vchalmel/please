@@ -347,7 +347,7 @@ def main() -> None:
         typer.run(setup)
     except json.JSONDecodeError:
         center_print(
-            "It seems like the config file is empty. Running the setup wizard again.", COLOR_WARNING)
+            "Something's wrong with your config file. You can fix ~/.config/please/config.json file manually or you can enter your name again in the setup wizard to reset the config file. ENTERING NAME WILL OVERWRITE YOUR PREVIOUS CONFIG.", COLOR_WARNING)
         typer.run(setup)
     else:
         if config["initial_setup_done"] is True:
