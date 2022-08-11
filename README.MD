@@ -4,7 +4,7 @@
 
 <p align="center"><img src="https://user-images.githubusercontent.com/25067102/173348894-09190c99-baff-477a-9b48-b4d3cff0f029.gif"></img></center>
 
-# [New version out now!](https://github.com/NayamAmarshe/please/releases/tag/0.2.0)
+# [Version 0.3 is out now!](https://github.com/NayamAmarshe/please/releases/tag/0.3.0)
 ### Upgrade with `pip3 install please-cli --upgrade`
 
 # 📖 Table of Contents
