@@ -132,19 +132,19 @@ please setup
 
 1.Navigate to `~/.config/please`  
 2. Open config.json  
-3. Change `"diable_greeting" from false` to true (All lowercase).\
+3. Change `"diable_greeting": false` to `"diable_greeting": true` (All lowercase).
 
 ## Remove Horizontal Line in please's output
 
 1.Navigate to `~/.config/please`  
 2. Open config.json  
-3. Change `"diable_line": false` to true (All lowercase).\
+3. Change `"diable_line": false` to `"diable_line": true` (All lowercase).
 
 ## Remove Quotes in please's output
 
 1.Navigate to `~/.config/please`  
 2. Open config.json  
-3. Change `"diable_quotes" from false` to true (All lowercase).\
+3. Change `"diable_quotes": false` to `"diable_quotes": true` (All lowercase).
 
 # 💻 Local Development
 
