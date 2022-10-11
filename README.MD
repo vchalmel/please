@@ -105,7 +105,7 @@ please do <TASK NUMBER>
 # Mark task as undone
 please undo <TASK NUMBER>
 
-# Show tasks even if all tasks are markded as done
+# Show tasks even if all tasks are marked as done
 please showtasks
 
 # Move task to specified position
