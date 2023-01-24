@@ -324,7 +324,7 @@ def show(ctx: typer.Context) -> None:
             config["disable_quotes"] = False
             write_config(config)
             quote = getquotes()
-            center_print(f'[#63D2FF]"{quote["content"]}[/]', wrap=True)
+            center_print(f'[#63D2FF]"{quote["content"]}"[/]', wrap=True)
             center_print(
                 f'[#F03A47][i]- {quote["author"]}[/i][/]\n', wrap=True)
 
