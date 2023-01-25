@@ -202,9 +202,7 @@ def changetimeformat() -> None:
             center_print("Changed Time Format from 24h to 12h",
                          COLOR_SUCCESS)
     except:
-        config["time_format_24h"] = True
-        center_print("Changed Time Format from 24h to 12h",
-                     COLOR_SUCCESS)
+        config["time_format_24h"] = False
     write_config(config)
 
 
@@ -284,6 +282,7 @@ def setup() -> None:
     config["disable_line"] = False
     config["disable_quotes"] = False
     config["disable_greeting"] = False
+    config["time_format_24h"] = False
     write_config(config)
 
 
