@@ -180,6 +180,11 @@ def edit(index: int, new_name: str) -> None:
             "Sorry, cannot edit tasks as the Task list is empty", COLOR_ERROR
         )
         return
+    if (len(new_name) == 0):
+        center_print(
+            "Please enter a valid name", COLOR_ERROR
+        )
+        return
 
     try:
         old_name = config["tasks"][index - 1]["name"]
