@@ -111,6 +111,9 @@ please delete <TASK NUMBER>
 # Mark task as done
 please do <TASK NUMBER>
 
+# Edit task name
+please edit <TASK NUMBER> <NEW NAME>
+
 # Mark task as undone
 please undo <TASK NUMBER>
 

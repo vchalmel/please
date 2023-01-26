@@ -173,6 +173,41 @@ def move(old_index: int, new_index: int):
             "Please check the entered index values", COLOR_WARNING
         )
 
+@app.command(short_help="Edit task name")
+def edit(index: int, new_name: str) -> None:
+    if not 0 <= index - 1 < len(config["tasks"]):
+        center_print(
+            "Are you sure you gave me the correct task number?",
+            COLOR_WARNING,
+            wrap=True,
+        )
+        return
+
+    if (len(config["tasks"]) == 0):
+        center_print(
+            "Sorry, cannot edit tasks as the Task list is empty", COLOR_ERROR
+        )
+        return
+
+    if (len(new_name) == 0):
+        center_print(
+            "Please enter a valid name", COLOR_ERROR
+        )
+        return
+
+    try:
+        old_name = config["tasks"][index - 1]["name"]
+        config["tasks"][index - 1]["name"] = new_name
+        write_config(config)
+        if old_name != new_name:
+            center_print("Updated Task Name", COLOR_SUCCESS)
+        else:
+            center_print("No Updates Made", COLOR_INFO)
+        print_tasks(config["tasks"])
+    except:
+        center(
+            "Please check the entered Task index and new Task name", COLOR_WARNING
+        )
 
 @app.command(short_help="Clean up tasks marked as done from the task list")
 def clean() -> None:
