@@ -13,7 +13,7 @@
 
 <p align="center"><img src="https://user-images.githubusercontent.com/25067102/173348894-09190c99-baff-477a-9b48-b4d3cff0f029.gif"></img></center>
 
-# [Version 0.3 is out now!](https://github.com/NayamAmarshe/please/releases/tag/0.3.0)
+# [Version 0.3.1 is out now!](https://github.com/NayamAmarshe/please/releases/tag/0.3.1)
 ### Upgrade with `pip3 install please-cli --upgrade`
 
 # 📖 Table of Contents
@@ -198,6 +198,12 @@ poetry build
 ```
 
 - The package will be generated in **dist** folder, you can then use pip to install the WHL file.
+
+7. **For Nayam:** Publish the package with:
+
+```
+poetry publish -u <username> -p <password>
+```
 
 # 🚮 Uninstalling
 
