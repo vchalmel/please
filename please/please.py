@@ -61,6 +61,19 @@ def add(task: str) -> None:
     center_print(f'Added "{task}" to the list', COLOR_SUCCESS)
     print_tasks()
 
+@app.command(short_help="Show once a day")
+def daily(ctx: typer.Context) -> None:
+    try:
+        if config["last_reminder"] == datetime.date.today().strftime("%d-%m-%Y"):
+            pass
+        else:
+            config["last_reminder"] = datetime.date.today().strftime("%d-%m-%Y")
+            write_config(config)
+            show(ctx)
+    except:
+        config["last_reminder"] = datetime.date.today().strftime("%d-%m-%Y")
+        write_config(config)
+        show(ctx)
 
 @app.command(short_help="Deletes a Task")
 def delete(index: int) -> None:
@@ -318,6 +331,7 @@ def setup() -> None:
     config["disable_quotes"] = False
     config["disable_greeting"] = False
     config["time_format_24h"] = False
+    config["last_reminder"] = None
     write_config(config)
 
 
