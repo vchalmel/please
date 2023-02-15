@@ -205,7 +205,7 @@ def edit(index: int, new_name: str) -> None:
             center_print("No Updates Made", COLOR_INFO)
         print_tasks(config["tasks"])
     except:
-        center(
+        center_print(
             "Please check the entered Task index and new Task name", COLOR_WARNING
         )
 
