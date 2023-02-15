@@ -53,6 +53,19 @@
    set fish_greeting please
    ```
 
+   Or if you prefer to run **please** once a day:
+
+   ```bash
+   # FOR BASH
+   echo 'please daily' >> ~/.bashrc
+
+   # FOR ZSH
+   echo 'please daily' >> ~/.zshrc
+   
+   # FOR FISH
+   set fish_greeting please daily
+   ```
+
 4. That's it! Check if `please` command works in your terminal.
 
 ### Method 2:
