@@ -273,11 +273,11 @@ def showtasks() -> None:
         for index, task in enumerate(task_num):
             if task["done"]:
                 task_name = f"[#A0FF55] {task['name']}[/]"
-                task_status = "✅"
+                task_status = f'{config.get("done_icon", "✅")}'
                 task_index = f"[#A0FF55] {str(index + 1)} [/]"
             else:
                 task_name = f"[#FF5555] {task['name']}[/]"
-                task_status = "❌"
+                task_status = f'{config.get("notdone_icon", "❌")}'
                 task_index = f"[#FF5555] {str(index + 1)} [/]"
 
             table1.add_row(task_index, task_name, task_status)
@@ -332,6 +332,8 @@ def setup() -> None:
     config["disable_greeting"] = False
     config["time_format_24h"] = False
     config["last_reminder"] = None
+    config["done_icon"] = "✅"
+    config["notdone_icon"] = "❌"
     write_config(config)
 
 
