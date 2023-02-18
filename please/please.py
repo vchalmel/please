@@ -332,8 +332,8 @@ def setup() -> None:
     config["disable_greeting"] = False
     config["time_format_24h"] = False
     config["last_reminder"] = None
-    conig["done_icon"] = "✅"
-    conig["notdone_icon"] = "❌"
+    config["done_icon"] = "✅"
+    config["notdone_icon"] = "❌"
     write_config(config)
 
 
