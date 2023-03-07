@@ -300,12 +300,10 @@ def getquotes() -> dict:
     Returns:
         dict: quote with its metadata
     """
-    __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__))
-    )
-    with open(os.path.join(__location__, "quotes.json"), "r") as qf:
+
+    with open(config["quotes_file"], "r") as qf:
         quotes_file = json.load(qf)
-    return quotes_file[random.randrange(0, 500)]
+    return quotes_file[random.randrange(0, len(quotes_file))]
 
 
 @app.command(short_help="Reset all data and run setup")
@@ -325,6 +323,11 @@ def setup() -> None:
     center_print("If you wanna change your name later, please use:", "red")
     console.print(code_markdown)
 
+    #Get location
+    __location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__))
+    )
+
     config["initial_setup_done"] = True
     config["tasks"] = []
     config["disable_line"] = False
@@ -334,6 +337,7 @@ def setup() -> None:
     config["last_reminder"] = None
     config["done_icon"] = "✅"
     config["notdone_icon"] = "❌"
+    config["quotes_file"] = os.path.join(__location__, "quotes.json")
     write_config(config)
 
 
