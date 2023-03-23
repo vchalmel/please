@@ -111,6 +111,7 @@ and restart the terminal.
 
 # 👨‍💻 Commands
 
+Some of these commands may not be in the latest release.
 ```bash
 # Show time, quotes and tasks
 please
