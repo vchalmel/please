@@ -253,6 +253,49 @@ def changetimeformat() -> None:
         config["time_format_24h"] = False
     write_config(config)
 
+@app.command(short_help="Set a custom file to fetch quotes")
+def changequotes(quotes_file: str) -> None:
+    #Check if file exists and it is a valid JSON
+    try:
+        with open(quotes_file, "r") as qf:
+            quotes = json.load(qf)
+
+        #Check if the file has at least one quote
+        if len(quotes) == 0:
+            center_print(
+                "There must be at least 1 quote", COLOR_ERROR
+            )
+            return
+
+        #Check if the file has the right keys
+        try:
+            for q in quotes:
+                content = q["content"]
+                author = q["author"]
+            
+            # File is valid, replace the path in the config.json
+            config["quotes_file"] = quotes_file
+            center_print("Changed quote file to " + quotes_file,
+                         COLOR_SUCCESS)
+            write_config(config)
+        
+        #Catch wrong key error exception
+        except KeyError:
+            center_print(
+                "The JSON must have the \"author\" and \"content\" fields", COLOR_ERROR
+            )
+
+    #Catch no file exception
+    except FileNotFoundError:
+        center_print(
+            "Sorry, the file was not found, ensure that you provided the full path\n of the JSON file and the file exists", COLOR_ERROR
+        )
+    #Catch a bag JSON format exception
+    except json.decoder.JSONDecodeError:
+        center_print(
+            "Please insert a file with a valid JSON format", COLOR_ERROR
+        )
+
 
 @app.command(short_help="Show all Tasks")
 def showtasks() -> None:
@@ -300,12 +343,10 @@ def getquotes() -> dict:
     Returns:
         dict: quote with its metadata
     """
-    __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__))
-    )
-    with open(os.path.join(__location__, "quotes.json"), "r") as qf:
+
+    with open(config["quotes_file"], "r") as qf:
         quotes_file = json.load(qf)
-    return quotes_file[random.randrange(0, 500)]
+    return quotes_file[random.randrange(0, len(quotes_file))]
 
 
 @app.command(short_help="Reset all data and run setup")
@@ -325,6 +366,11 @@ def setup() -> None:
     center_print("If you wanna change your name later, please use:", "red")
     console.print(code_markdown)
 
+    #Get location
+    __location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__))
+    )
+
     config["initial_setup_done"] = True
     config["tasks"] = []
     config["disable_line"] = False
@@ -334,6 +380,7 @@ def setup() -> None:
     config["last_reminder"] = None
     config["done_icon"] = "✅"
     config["notdone_icon"] = "❌"
+    config["quotes_file"] = os.path.join(__location__, "quotes.json")
     write_config(config)
 
 
