@@ -55,11 +55,13 @@ def callme(name: str) -> None:
 
 @app.command(short_help="Add a Task")
 def add(task: str) -> None:
+    # TODO : Add a parameter handle to provide parent task id
     new_task = {"name": task, "done": False}
     config["tasks"].append(new_task)
     write_config(config)
     center_print(f'Added "{task}" to the list', COLOR_SUCCESS)
     print_tasks()
+
 
 @app.command(short_help="Show once a day")
 def daily(ctx: typer.Context) -> None:
@@ -75,8 +77,10 @@ def daily(ctx: typer.Context) -> None:
         write_config(config)
         show(ctx)
 
+
 @app.command(short_help="Deletes a Task")
 def delete(index: int) -> None:
+    # TODO : Implement sub-tasks deletion when parent is deleted
     index = index - 1
     if len(config["tasks"]) == 0:
         center_print(
@@ -100,6 +104,7 @@ def delete(index: int) -> None:
 
 @app.command(short_help="Mark a task as done")
 def do(index: int) -> None:
+    # TODO : Mark parent as done when last undone child sub-task marked as done
     index = index - 1
 
     if not 0 <= index < len(config["tasks"]):
@@ -134,6 +139,7 @@ def do(index: int) -> None:
 
 @app.command(short_help="Mark a task as undone")
 def undo(index: int) -> None:
+    # TODO : Mark parent as undone if any child sub-task marked as undone
     index = index - 1
 
     if not 0 <= index < len(config["tasks"]):
@@ -164,6 +170,7 @@ def undo(index: int) -> None:
 
 @app.command(short_help="Change task order")
 def move(old_index: int, new_index: int):
+    # TODO : Add hierarchy management (ex : move inside parent, move from one parent to another, detach from parent)
     if (len(config["tasks"]) == 0):
         center_print(
             "Sorry, cannot move tasks as the Task list is empty", COLOR_ERROR
@@ -185,6 +192,7 @@ def move(old_index: int, new_index: int):
         center_print(
             "Please check the entered index values", COLOR_WARNING
         )
+
 
 @app.command(short_help="Edit task name")
 def edit(index: int, new_name: str) -> None:
@@ -222,6 +230,7 @@ def edit(index: int, new_name: str) -> None:
             "Please check the entered Task index and new Task name", COLOR_WARNING
         )
 
+
 @app.command(short_help="Clean up tasks marked as done from the task list")
 def clean() -> None:
     res = []
@@ -252,6 +261,7 @@ def changetimeformat() -> None:
     except:
         config["time_format_24h"] = False
     write_config(config)
+
 
 @app.command(short_help="Set a custom file to fetch quotes")
 def changequotes(quotes_file: str) -> None:
@@ -299,6 +309,7 @@ def changequotes(quotes_file: str) -> None:
 
 @app.command(short_help="Show all Tasks")
 def showtasks() -> None:
+    # TODO : Implement hierarchical display of hierarchized tasks in Table
     task_num = config["tasks"]
     table1 = Table(
         title="Tasks",
@@ -351,6 +362,8 @@ def getquotes() -> dict:
 
 @app.command(short_help="Reset all data and run setup")
 def setup() -> None:
+    # TODO : Add option to enable or disable tasks hierarchy
+    # TODO : Add option to show or hide sub-tasks
     """Initialize the config file."""
     config = {}
     config["user_name"] = typer.prompt(
