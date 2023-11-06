@@ -28,6 +28,7 @@ def center_print(text, style: str = None, wrap: bool = False) -> None:
     Args:
         text (Union[str, Rule, Table]): object to center align
         style (str, optional): styling of the object. Defaults to None.
+        wrap (bool, optional): wrapping behavior. Defaults to False.
     """
     if wrap:
         width = shutil.get_terminal_size().columns // 2
@@ -54,10 +55,37 @@ def callme(name: str) -> None:
 
 
 @app.command(short_help="Add a Task")
-def add(task: str) -> None:
-    # TODO : Add a parameter handle to provide parent task id
+def add(task: str, parent_id: int = None) -> None:
+    """Add a task.
+
+    Args:
+        task (str): text description of the task.
+        parent_id (int, optional): id of the parent task if applicable.
+    """
     new_task = {"name": task, "done": False}
-    config["tasks"].append(new_task)
+    if not parent_id:
+        config["tasks"].append(new_task)
+    else:
+        if not config["hierarchical"]:
+            center_print(
+                "Tasks hierarchy is currently disabled in your configuration",
+                COLOR_WARNING,
+                wrap=True,
+            )
+            return
+        if not 0 <= parent_id - 1 < len(config["tasks"]):
+            center_print(
+                "Are you sure you gave me the correct number to add a subtask for ?",
+                COLOR_WARNING,
+                wrap=True,
+            )
+            return
+        else:
+            if 'subtasks' in config["tasks"][parent_id - 1]:
+                config["tasks"][parent_id - 1]['subtasks'].append(new_task)
+            else:
+                config["tasks"][parent_id - 1]['subtasks'] = [new_task]
+
     write_config(config)
     center_print(f'Added "{task}" to the list', COLOR_SUCCESS)
     print_tasks()
@@ -80,7 +108,7 @@ def daily(ctx: typer.Context) -> None:
 
 @app.command(short_help="Deletes a Task")
 def delete(index: int) -> None:
-    # TODO : Implement sub-tasks deletion when parent is deleted
+    # TODO : Implement sub-tasks deletion & when parent is deleted
     index = index - 1
     if len(config["tasks"]) == 0:
         center_print(
@@ -341,6 +369,12 @@ def showtasks() -> None:
         center_print("[#61E294]Looking good, no pending tasks 😁[/]")
 
 
+@app.command(short_help="Display the children sub-tasks of a given parent task")
+def showsubtasks(parent_index: str) -> None:
+    # TODO : Display the children sub-tasks of a given parent task
+    raise NotImplemented
+
+
 def print_tasks(forced_print: bool = False) -> None:
     if not all_tasks_done() or forced_print:
         showtasks()
@@ -362,8 +396,8 @@ def getquotes() -> dict:
 
 @app.command(short_help="Reset all data and run setup")
 def setup() -> None:
-    # TODO : Add option to enable or disable tasks hierarchy
-    # TODO : Add option to show or hide sub-tasks
+    # DONE : Add option to enable or disable tasks hierarchy
+    # DONE : Add option to show or hide sub-tasks
     """Initialize the config file."""
     config = {}
     config["user_name"] = typer.prompt(
@@ -386,6 +420,8 @@ def setup() -> None:
 
     config["initial_setup_done"] = True
     config["tasks"] = []
+    config["hierarchical"] = False
+    config["display_hierarchy"] = False
     config["disable_line"] = False
     config["disable_quotes"] = False
     config["disable_greeting"] = False
