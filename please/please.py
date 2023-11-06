@@ -13,6 +13,10 @@ from rich.markdown import Markdown
 from rich.rule import Rule
 from rich.table import Table
 
+from typing import (
+    Union
+)
+
 app = typer.Typer()
 console = Console()
 
@@ -73,7 +77,14 @@ def add(task: str, parent_id: int = None) -> None:
                 wrap=True,
             )
             return
-        if not 0 <= parent_id - 1 < len(config["tasks"]):
+        elif not isinstance(parent_id, int):
+            center_print(
+                "Subtasks should be added to a main task designed by its index number",
+                COLOR_WARNING,
+                wrap=True,
+            )
+            return
+        elif not 0 <= parent_id - 1 < len(config["tasks"]):
             center_print(
                 "Are you sure you gave me the correct number to add a subtask for ?",
                 COLOR_WARNING,
@@ -107,27 +118,56 @@ def daily(ctx: typer.Context) -> None:
 
 
 @app.command(short_help="Deletes a Task")
-def delete(index: int) -> None:
+def delete(index: Union[int, str]) -> None:
     # TODO : Implement sub-tasks deletion & when parent is deleted
-    index = index - 1
     if len(config["tasks"]) == 0:
         center_print(
             "Sorry, There are no tasks left to delete", COLOR_INFO, wrap=True
         )
         return
 
-    if not 0 <= index < len(config["tasks"]):
-        center_print(
-            "Are you sure you gave me the correct number to delete?",
-            COLOR_WARNING,
-            wrap=True,
-        )
+    if isinstance(index, str):
+        main_index, sub_index = index.split('.')
+        if not 0 <= main_index - 1 < len(config["tasks"]):
+            center_print(
+                "Are you sure you gave me the correct index to delete?",
+                COLOR_WARNING,
+                wrap=True,
+            )
+        elif 'subtasks' not in config["tasks"][main_index - 1]:
+            center_print(
+                "Are you sure you gave me the correct index to delete?",
+                COLOR_WARNING,
+                wrap=True,
+            )
+        elif 0 <= sub_index - 1 < len(config["tasks"][main_index - 1]["subtasks"]):
+            center_print(
+                "Are you sure you gave me the correct index to delete?",
+                COLOR_WARNING,
+                wrap=True,
+            )
+        else:
+            deleted_task = config["tasks"][main_index - 1]["subtasks"][sub_index - 1]
+            del config["tasks"][main_index - 1]["subtasks"][sub_index - 1]
+            write_config(config)
+            center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
+            print_tasks(True)
+
     else:
-        deleted_task = config["tasks"][index]
-        del config["tasks"][index]
-        write_config(config)
-        center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
-        print_tasks(True)
+        index = index - 1
+
+        if not 0 <= index < len(config["tasks"]):
+            center_print(
+                "Are you sure you gave me the correct number to delete?",
+                COLOR_WARNING,
+                wrap=True,
+            )
+        else:
+            deleted_task = config["tasks"][index]
+            del config["tasks"][index]
+            write_config(config)
+            center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
+            print_tasks(True)
 
 
 @app.command(short_help="Mark a task as done")
@@ -413,7 +453,7 @@ def setup() -> None:
     center_print("If you wanna change your name later, please use:", "red")
     console.print(code_markdown)
 
-    #Get location
+    # Get location
     __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__))
     )
