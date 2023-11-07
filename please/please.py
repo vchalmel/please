@@ -191,7 +191,7 @@ def do(index: Union[int, str]) -> None:
             if config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"]:
                 center_print("No Updates Made, Task Already Done",
                              COLOR_INFO)
-                print_tasks()
+                print_tasks(True)
                 return
 
             config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"] = True
@@ -216,14 +216,14 @@ def do(index: Union[int, str]) -> None:
         if config["tasks"][index]["done"]:
             center_print("No Updates Made, Task Already Done",
                          COLOR_INFO)
-            print_tasks()
+            print_tasks(True)
             return
 
         config["tasks"][index]["done"] = True
 
     write_config(config)
     center_print("Updated Task List", COLOR_SUCCESS)
-    print_tasks()
+    print_tasks(True)
 
 
 @app.command(short_help="Mark a task as undone")
@@ -256,7 +256,7 @@ def undo(index: Union[int, str]) -> None:
             if not config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"]:
                 center_print("No Updates Made, Task Still Pending",
                              COLOR_INFO)
-                print_tasks()
+                print_tasks(True)
                 return
 
             config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"] = False
@@ -276,14 +276,14 @@ def undo(index: Union[int, str]) -> None:
         if not config["tasks"][index]["done"]:
             center_print("No Updates Made, Task Still Pending",
                          COLOR_INFO)
-            print_tasks()
+            print_tasks(True)
             return
 
         config["tasks"][index]["done"] = False
 
     write_config(config)
     center_print("Updated Task List", COLOR_SUCCESS)
-    print_tasks()
+    print_tasks(True)
 
 
 @app.command(short_help="Change task order")
@@ -304,7 +304,7 @@ def move(old_index: Union[int, str], new_index: Union[int, str]):
                 center_print("Updated Task List", COLOR_SUCCESS)
             else:
                 center_print("No Updates Made", COLOR_INFO)
-            print_tasks(config["tasks"])
+            print_tasks(True)
         except:
             center_print("Please check the entered index values",
                          COLOR_WARNING)
@@ -323,7 +323,7 @@ def move(old_index: Union[int, str], new_index: Union[int, str]):
                     new_index - 1,
                     config["tasks"][main_index_old - 1]["subtasks"].pop(sub_index_old - 1)
                 )
-            print_tasks(config["tasks"])
+            print_tasks(True)
         except:
             center_print("Please check the entered index values",
                          COLOR_WARNING)
@@ -339,7 +339,7 @@ def move(old_index: Union[int, str], new_index: Union[int, str]):
                 sub_index_new - 1,
                 config["tasks"].pop(old_index - 1)
             )
-            print_tasks(config["tasks"])
+            print_tasks(True)
         except:
             center_print("Please check the entered index values",
                          COLOR_WARNING)
@@ -349,26 +349,19 @@ def move(old_index: Union[int, str], new_index: Union[int, str]):
 @app.command(short_help="Edit task name")
 def edit(index: Union[int, str], new_name: str) -> None:
     if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, cannot edit tasks as the Task list is empty", COLOR_ERROR
-        )
+        center_print("Sorry, cannot edit tasks as the Task list is empty", COLOR_ERROR)
         return
 
     if len(new_name) == 0:
-        center_print(
-            "Please enter a valid name", COLOR_ERROR
-        )
+        center_print("Please enter a valid name", COLOR_ERROR)
         return
 
     if isinstance(index, int):
         if not 0 <= index - 1 < len(config["tasks"]):
-            center_print(
-                "Are you sure you gave me the correct task number?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct task number?",
+                         COLOR_WARNING,
+                         wrap=True)
             return
-
         try:
             old_name = config["tasks"][index - 1]["name"]
             config["tasks"][index - 1]["name"] = new_name
@@ -377,11 +370,24 @@ def edit(index: Union[int, str], new_name: str) -> None:
                 center_print("Updated Task Name", COLOR_SUCCESS)
             else:
                 center_print("No Updates Made", COLOR_INFO)
-            print_tasks(config["tasks"])
+            print_tasks(True)
+            return
         except:
-            center_print(
-                "Please check the entered Task index and new Task name", COLOR_WARNING
-            )
+            center_print("Please check the entered Task index and new Task name", COLOR_WARNING)
+    elif isinstance(index, str):
+        try:
+            main_index, sub_index = index.split('.')
+            old_name = config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["name"]
+            config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["name"] = new_name
+            write_config(config)
+            if old_name != new_name:
+                center_print("Updated Task Name", COLOR_SUCCESS)
+            else:
+                center_print("No Updates Made", COLOR_INFO)
+            print_tasks(True)
+            return
+        except:
+            center_print("Please check the entered Task index and new Task name", COLOR_WARNING)
 
 
 @app.command(short_help="Clean up tasks marked as done from the task list")
@@ -394,10 +400,10 @@ def clean() -> None:
         config['tasks'] = res
         write_config(config)
         center_print("Updated Task List", COLOR_SUCCESS)
-        print_tasks(config["tasks"])
+        print_tasks(True)
         return
     center_print("No Updates Made", COLOR_INFO)
-    print_tasks(config["tasks"])
+    print_tasks()
 
 
 @app.command(short_help="Toggle Time Format from 24 Hours to 12 Hours")
@@ -451,8 +457,8 @@ def changequotes(quotes_file: str) -> None:
     #Catch no file exception
     except FileNotFoundError:
         center_print(
-            "Sorry, the file was not found, ensure that you provided the full path\n of the JSON file and the file exists", COLOR_ERROR
-        )
+            "Sorry, the file was not found, ensure that you provided the full path\n of the JSON file and the file exists",
+            COLOR_ERROR)
     #Catch a bag JSON format exception
     except json.decoder.JSONDecodeError:
         center_print(
