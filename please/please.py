@@ -17,6 +17,8 @@ from typing import (
     Union
 )
 
+from utils import clean_dict, clean_list
+
 app = typer.Typer()
 console = Console()
 
@@ -393,7 +395,9 @@ def edit(index: Union[int, str], new_name: str) -> None:
 @app.command(short_help="Clean up tasks marked as done from the task list")
 def clean() -> None:
     res = []
-    for i in config['tasks']:
+    for i in clean_list(config['tasks']):
+        if 'subtasks' in i:
+            i['subtasks'] = [s for s in i['subtasks'] if not s['done']]
         if not i['done']:
             res.append(i)
     if config['tasks'] != res:
