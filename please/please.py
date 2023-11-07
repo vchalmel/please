@@ -507,7 +507,7 @@ def showtasks() -> None:
                     style="#e85d04 bold"
                 )
                 sub_table.add_column("Number", style="#e85d04")
-                sub_table.add_column("Task")
+                sub_table.add_column("Sub-Task")
                 sub_table.add_column("Status")
                 if len(task["subtasks"]) > 0:
                     for sub_idx, sub_task in enumerate(task["subtasks"]):
@@ -531,9 +531,53 @@ def showtasks() -> None:
 
 
 @app.command(short_help="Display the children sub-tasks of a given parent task")
-def showsubtasks(parent_index: str) -> None:
-    # TODO : Display the children sub-tasks of a given parent task
-    raise NotImplemented
+def showsubtasks(parent_index: int) -> None:
+    try:
+        parent_task = config['tasks'][parent_index - 1]
+    except:
+        center_print("Are you sure you gave me the correct task number?",
+                     COLOR_WARNING,
+                     wrap=True)
+        return
+
+    try:
+        sub_tasks = parent_task["subtasks"]
+    except KeyError:
+        center_print("The task doesn't have any sub-tasks",
+                     COLOR_WARNING,
+                     wrap=True)
+        return
+
+    table1 = Table(
+        title=f"Sub-Tasks of task {parent_task['name']}",
+        title_style="grey39",
+        header_style="#e85d04",
+        style="#e85d04 bold",
+    )
+    table1.add_column("Number", style="#e85d04")
+    table1.add_column("Sub-Task")
+    table1.add_column("Status")
+
+    if len(sub_tasks) == 0:
+        center_print(table1)
+    else:
+        for index, task in enumerate(sub_tasks):
+
+            if task["done"]:
+                task_name = f"[#A0FF55] {task['name']}[/]"
+                task_status = f'{config.get("done_icon", "✅")}'
+                task_index = f"[#A0FF55] {str(index + 1)} [/]"
+            else:
+                task_name = f"[#FF5555] {task['name']}[/]"
+                task_status = f'{config.get("notdone_icon", "❌")}'
+                task_index = f"[#FF5555] {str(index + 1)} [/]"
+
+            table1.add_row(task_index, task_name, task_status)
+
+        center_print(table1)
+
+    if all_tasks_done():
+        center_print("[#61E294]Looking good, no pending tasks 😁[/]")
 
 
 def print_tasks(forced_print: bool = False) -> None:
@@ -557,8 +601,6 @@ def getquotes() -> dict:
 
 @app.command(short_help="Reset all data and run setup")
 def setup() -> None:
-    # DONE : Add option to enable or disable tasks hierarchy
-    # DONE : Add option to show or hide sub-tasks
     """Initialize the config file."""
     config = {}
     config["user_name"] = typer.prompt(
