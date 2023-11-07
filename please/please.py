@@ -287,29 +287,61 @@ def undo(index: Union[int, str]) -> None:
 
 
 @app.command(short_help="Change task order")
-def move(old_index: int, new_index: int):
-    # TODO : Add hierarchy management (ex : move inside parent, move from one parent to another, detach from parent)
-    if (len(config["tasks"]) == 0):
-        center_print(
-            "Sorry, cannot move tasks as the Task list is empty", COLOR_ERROR
-        )
+def move(old_index: Union[int, str], new_index: Union[int, str]):
+    if len(config["tasks"]) == 0:
+        center_print("Sorry, cannot move tasks as the Task list is empty",
+                     COLOR_ERROR)
         return
 
-    try:
-        config["tasks"][old_index - 1], config["tasks"][new_index - 1] = (
-            config["tasks"][new_index - 1],
-            config["tasks"][old_index - 1],
-        )
-        write_config(config)
-        if old_index != new_index:
-            center_print("Updated Task List", COLOR_SUCCESS)
-        else:
-            center_print("No Updates Made", COLOR_INFO)
-        print_tasks(config["tasks"])
-    except:
-        center_print(
-            "Please check the entered index values", COLOR_WARNING
-        )
+    if isinstance(old_index, int) and isinstance(new_index, int):
+        try:
+            config["tasks"][old_index - 1], config["tasks"][new_index - 1] = (
+                config["tasks"][new_index - 1],
+                config["tasks"][old_index - 1],
+            )
+            write_config(config)
+            if old_index != new_index:
+                center_print("Updated Task List", COLOR_SUCCESS)
+            else:
+                center_print("No Updates Made", COLOR_INFO)
+            print_tasks(config["tasks"])
+        except:
+            center_print("Please check the entered index values",
+                         COLOR_WARNING)
+            return
+    elif isinstance(old_index, str):
+        try:
+            main_index_old, sub_index_old = old_index.split('.')
+            if isinstance(new_index, str):
+                main_index_new, sub_index_new = new_index.split('.')
+                config["tasks"][main_index_new - 1]["subtasks"].insert(
+                    sub_index_new - 1,
+                    config["tasks"][main_index_old - 1]["subtasks"].pop(sub_index_old - 1)
+                )
+            else:
+                config["tasks"].insert(
+                    new_index - 1,
+                    config["tasks"][main_index_old - 1]["subtasks"].pop(sub_index_old - 1)
+                )
+        except:
+            center_print("Please check the entered index values",
+                         COLOR_WARNING)
+            return
+    elif isinstance(new_index, str):
+        try:
+            main_index_new, sub_index_new = new_index.split('.')
+            if "subtasks" in config["tasks"](old_index - 1):
+                center_print("Deeply nested subtasks are not yet supported.",
+                             COLOR_WARNING)
+                return
+            config["tasks"][main_index_new - 1]["subtasks"].insert(
+                sub_index_new - 1,
+                config["tasks"].pop(old_index - 1)
+            )
+        except:
+            center_print("Please check the entered index values",
+                         COLOR_WARNING)
+            return
 
 
 @app.command(short_help="Edit task name")
@@ -353,7 +385,7 @@ def edit(index: int, new_name: str) -> None:
 def clean() -> None:
     res = []
     for i in config['tasks']:
-        if i['done'] != True:
+        if not i['done']:
             res.append(i)
     if config['tasks'] != res:
         config['tasks'] = res
