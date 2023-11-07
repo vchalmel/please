@@ -472,7 +472,6 @@ def changequotes(quotes_file: str) -> None:
 
 @app.command(short_help="Show all Tasks")
 def showtasks() -> None:
-    # TODO : Implement hierarchical display of hierarchized tasks in Table
     task_num = config["tasks"]
     table1 = Table(
         title="Tasks",
@@ -488,6 +487,7 @@ def showtasks() -> None:
         center_print(table1)
     else:
         for index, task in enumerate(task_num):
+
             if task["done"]:
                 task_name = f"[#A0FF55] {task['name']}[/]"
                 task_status = f'{config.get("done_icon", "✅")}'
@@ -498,9 +498,35 @@ def showtasks() -> None:
                 task_index = f"[#FF5555] {str(index + 1)} [/]"
 
             table1.add_row(task_index, task_name, task_status)
+
+            if config["hierarchical"] and config["display_hierarchy"] and "subtasks" in task:
+                sub_table = Table(
+                    title="Sub-Tasks",
+                    title_style="grey39",
+                    header_style="#e85d04",
+                    style="#e85d04 bold"
+                )
+                sub_table.add_column("Number", style="#e85d04")
+                sub_table.add_column("Task")
+                sub_table.add_column("Status")
+                if len(task["subtasks"]) > 0:
+                    for sub_idx, sub_task in enumerate(task["subtasks"]):
+                        if sub_task["done"]:
+                            sub_task_name = f"[#A0FF55] {sub_task['name']}[/]"
+                            sub_task_status = f'{config.get("done_icon", "✅")}'
+                            sub_task_index = f"[#A0FF55] {str(index + 1)}.{str(sub_idx + 1)} [/]"
+                        else:
+                            sub_task_name = f"[#FF5555] {sub_task['name']}[/]"
+                            sub_task_status = f'{config.get("notdone_icon", "❌")}'
+                            sub_task_index = f"[#FF5555] {str(index + 1)}.{str(sub_idx + 1)} [/]"
+
+                        sub_table.add_row(sub_task_index, sub_task_name, sub_task_status)
+
+                table1.add_row(None, sub_table, None)
+
         center_print(table1)
 
-    if(all_tasks_done()):
+    if all_tasks_done():
         center_print("[#61E294]Looking good, no pending tasks 😁[/]")
 
 
