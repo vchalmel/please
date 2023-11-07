@@ -71,25 +71,19 @@ def add(task: str, parent_id: int = None) -> None:
         config["tasks"].append(new_task)
     else:
         if not config["hierarchical"]:
-            center_print(
-                "Tasks hierarchy is currently disabled in your configuration",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Tasks hierarchy is currently disabled in your configuration",
+                         COLOR_WARNING,
+                         wrap=True)
             return
         elif not isinstance(parent_id, int):
-            center_print(
-                "Subtasks should be added to a main task designed by its index number",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Subtasks should be added to a main task designed by its index number",
+                         COLOR_WARNING,
+                         wrap=True)
             return
         elif not 0 <= parent_id - 1 < len(config["tasks"]):
-            center_print(
-                "Are you sure you gave me the correct number to add a subtask for ?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct number to add a subtask for ?",
+                         COLOR_WARNING,
+                         wrap=True)
             return
         else:
             if 'subtasks' in config["tasks"][parent_id - 1]:
@@ -120,61 +114,55 @@ def daily(ctx: typer.Context) -> None:
 @app.command(short_help="Deletes a Task")
 def delete(index: Union[int, str]) -> None:
     if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, There are no tasks left to delete", COLOR_INFO, wrap=True
-        )
+        center_print("Sorry, There are no tasks left to delete",
+                     COLOR_INFO,
+                     wrap=True)
         return
 
     if isinstance(index, str):
         main_index, sub_index = index.split('.')
+
         if not 0 <= main_index - 1 < len(config["tasks"]):
-            center_print(
-                "Are you sure you gave me the correct index to delete?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct index to delete?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         elif 'subtasks' not in config["tasks"][main_index - 1]:
-            center_print(
-                "Are you sure you gave me the correct index to delete?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct index to delete?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         elif 0 <= sub_index - 1 < len(config["tasks"][main_index - 1]["subtasks"]):
-            center_print(
-                "Are you sure you gave me the correct index to delete?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct index to delete?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         else:
             deleted_task = config["tasks"][main_index - 1]["subtasks"][sub_index - 1]
             del config["tasks"][main_index - 1]["subtasks"][sub_index - 1]
-            write_config(config)
-            center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
-            print_tasks(True)
 
     else:
         index = index - 1
 
         if not 0 <= index < len(config["tasks"]):
-            center_print(
-                "Are you sure you gave me the correct number to delete?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct number to delete?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         else:
             deleted_task = config["tasks"][index]
             del config["tasks"][index]
-            write_config(config)
-            center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
-            print_tasks(True)
+    write_config(config)
+    center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
+    print_tasks(True)
 
 
 @app.command(short_help="Mark a task as done")
 def do(index: Union[int, str]) -> None:
     if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, There are no tasks to mark as done", COLOR_ERROR, wrap=True
-        )
+        center_print("Sorry, There are no tasks to mark as done",
+                     COLOR_ERROR,
+                     wrap=True)
         return
 
     if all_tasks_done():
@@ -183,35 +171,30 @@ def do(index: Union[int, str]) -> None:
 
     if isinstance(index, str):
         main_index, sub_index = index.split('.')
+
         if not 0 <= main_index - 1 < len(config["tasks"]):
-            center_print(
-                "Are you sure you gave me the correct index to mark as done ?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct index to mark as done ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         elif 'subtasks' not in config["tasks"][main_index - 1]:
-            center_print(
-                "Are you sure you gave me the correct index to mark as done ?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct index to mark as done ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         elif 0 <= sub_index - 1 < len(config["tasks"][main_index - 1]["subtasks"]):
-            center_print(
-                "Are you sure you gave me the correct index to mark as done ?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct index to mark as done ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
         else:
             if config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"]:
                 center_print("No Updates Made, Task Already Done",
-                         COLOR_INFO)
+                             COLOR_INFO)
                 print_tasks()
                 return
 
             config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"] = True
-            write_config(config)
-            center_print("Updated Task List", COLOR_SUCCESS)
-            print_tasks(True)
 
             all_subs_done = True
             for sub_task in config["tasks"][main_index - 1]["subtasks"]:
@@ -225,51 +208,79 @@ def do(index: Union[int, str]) -> None:
         index = index - 1
 
         if not 0 <= index < len(config["tasks"]):
-            center_print(
-                "Are you sure you gave me the correct number to mark as done?",
-                COLOR_WARNING,
-                wrap=True,
-            )
+            center_print("Are you sure you gave me the correct number to mark as done?",
+                         COLOR_WARNING,
+                         wrap=True)
             return
 
-        if (config["tasks"][index]["done"] == True):
+        if config["tasks"][index]["done"]:
             center_print("No Updates Made, Task Already Done",
                          COLOR_INFO)
             print_tasks()
             return
 
         config["tasks"][index]["done"] = True
-        write_config(config)
-        center_print("Updated Task List", COLOR_SUCCESS)
-        print_tasks()
+
+    write_config(config)
+    center_print("Updated Task List", COLOR_SUCCESS)
+    print_tasks()
 
 
 @app.command(short_help="Mark a task as undone")
-def undo(index: int) -> None:
-    # TODO : Mark parent as undone if any child sub-task marked as undone
-    index = index - 1
-
-    if not 0 <= index < len(config["tasks"]):
-        center_print(
-            "Are you sure you gave me the correct number to mark as undone?",
-            COLOR_WARNING,
-            wrap=True,
-        )
-        return
-
+def undo(index: Union[int, str]) -> None:
     if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, There are no tasks to mark as undone", COLOR_INFO, wrap=True
-        )
+        center_print("Sorry, There are no tasks to mark as done",
+                     COLOR_ERROR,
+                     wrap=True)
         return
 
-    if (config["tasks"][index]["done"] == False):
-        center_print("No Updates Made, Task Still Pending",
-                     COLOR_INFO)
-        print_tasks()
-        return
+    if isinstance(index, str):
+        main_index, sub_index = index.split('.')
 
-    config["tasks"][index]["done"] = False
+        if not 0 <= main_index - 1 < len(config["tasks"]):
+            center_print("Are you sure you gave me the correct index to mark as undone ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif 'subtasks' not in config["tasks"][main_index - 1]:
+            center_print("Are you sure you gave me the correct index to mark as undone ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif 0 <= sub_index - 1 < len(config["tasks"][main_index - 1]["subtasks"]):
+            center_print("Are you sure you gave me the correct index to mark as undone ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        else:
+            if not config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"]:
+                center_print("No Updates Made, Task Still Pending",
+                             COLOR_INFO)
+                print_tasks()
+                return
+
+            config["tasks"][main_index - 1]["subtasks"][sub_index - 1]["done"] = False
+            if config["tasks"][main_index - 1]["done"]:
+                center_print("As a sub task is now pending, marking main task as pending.", COLOR_SUCCESS)
+                config["tasks"][main_index - 1]["done"] = False
+
+    else:
+        index = index - 1
+
+        if not 0 <= index < len(config["tasks"]):
+            center_print("Are you sure you gave me the correct number to mark as undone?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+
+        if not config["tasks"][index]["done"]:
+            center_print("No Updates Made, Task Still Pending",
+                         COLOR_INFO)
+            print_tasks()
+            return
+
+        config["tasks"][index]["done"] = False
+
     write_config(config)
     center_print("Updated Task List", COLOR_SUCCESS)
     print_tasks()
