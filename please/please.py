@@ -493,9 +493,11 @@ def showtasks() -> None:
         title="Tasks",
         title_style="grey39",
         header_style="#e85d04",
-        style="#e85d04 bold",
+        style="#e85d04 bold"
     )
     table1.add_column("Number", style="#e85d04")
+    if config["hierarchical"] and not config["display_hierarchy"]:
+        table1.add_column("Has subtasks")
     table1.add_column("Task")
     table1.add_column("Status")
 
@@ -513,7 +515,13 @@ def showtasks() -> None:
                 task_status = f'{config.get("notdone_icon", "❌")}'
                 task_index = f"[#FF5555] {str(index + 1)} [/]"
 
-            table1.add_row(task_index, task_name, task_status)
+            if config["hierarchical"] and not config["display_hierarchy"]:
+                if "subtasks" in task and len(task["subtasks"]) > 0:
+                    table1.add_row(task_index, f"{True}", task_name, task_status)
+                else:
+                    table1.add_row(task_index, f"{False}", task_name, task_status)
+            else:
+                table1.add_row(task_index, task_name, task_status)
 
             if config["hierarchical"] and config["display_hierarchy"] and "subtasks" in task:
                 sub_table = Table(
