@@ -13,6 +13,8 @@ from rich.markdown import Markdown
 from rich.rule import Rule
 from rich.table import Table
 
+from please.utils import clean_dict, clean_list
+
 app = typer.Typer()
 console = Console()
 
@@ -28,6 +30,7 @@ def center_print(text, style: str = None, wrap: bool = False) -> None:
     Args:
         text (Union[str, Rule, Table]): object to center align
         style (str, optional): styling of the object. Defaults to None.
+        wrap (bool, optional): wrapping behavior. Defaults to False.
     """
     if wrap:
         width = shutil.get_terminal_size().columns // 2
@@ -43,7 +46,7 @@ def write_config(data: dict) -> None:
 
 
 def all_tasks_done() -> bool:
-    return all(task["done"] for task in config["tasks"])
+    return all(task['done'] for task in config['tasks'])
 
 
 @app.command(short_help="Change name without resetting data")
@@ -54,12 +57,42 @@ def callme(name: str) -> None:
 
 
 @app.command(short_help="Add a Task")
-def add(task: str) -> None:
+def add(task: str, parent_id: int = None) -> None:
+    """Add a task.
+
+    Args:
+        task (str): text description of the task.
+        parent_id (int, optional): id of the parent task if applicable.
+    """
     new_task = {"name": task, "done": False}
-    config["tasks"].append(new_task)
+    if not parent_id:
+        config['tasks'].append(new_task)
+    else:
+        if not config["hierarchical"]:
+            center_print("Tasks hierarchy is currently disabled in your configuration",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif not isinstance(parent_id, int):
+            center_print("Subtasks should be added to a main task designed by its index number",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif not 0 <= parent_id - 1 < len(config['tasks']):
+            center_print("Are you sure you gave me the correct number to add a subtask for ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        else:
+            if 'subtasks' in config['tasks'][parent_id - 1]:
+                config['tasks'][parent_id - 1]['subtasks'].append(new_task)
+            else:
+                config['tasks'][parent_id - 1]['subtasks'] = [new_task]
+
     write_config(config)
     center_print(f'Added "{task}" to the list', COLOR_SUCCESS)
     print_tasks()
+
 
 @app.command(short_help="Show once a day")
 def daily(ctx: typer.Context) -> None:
@@ -75,167 +108,322 @@ def daily(ctx: typer.Context) -> None:
         write_config(config)
         show(ctx)
 
+
 @app.command(short_help="Deletes a Task")
-def delete(index: int) -> None:
-    index = index - 1
-    if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, There are no tasks left to delete", COLOR_INFO, wrap=True
-        )
+def delete(index: str) -> None:
+    if len(config['tasks']) == 0:
+        center_print("Sorry, There are no tasks left to delete",
+                     COLOR_INFO,
+                     wrap=True)
         return
 
-    if not 0 <= index < len(config["tasks"]):
-        center_print(
-            "Are you sure you gave me the correct number to delete?",
-            COLOR_WARNING,
-            wrap=True,
-        )
+    if index.isdigit():
+        index = int(index)
+
+    if isinstance(index, str):
+        main_index, sub_index = (int(it) for it in index.split('.'))
+        if not 0 <= main_index - 1 < len(config['tasks']):
+            center_print(f"Are you sure you gave me the correct index ({main_index}) to delete?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif 'subtasks' not in config['tasks'][main_index - 1]:
+            center_print(f"Task ({main_index}) seems to have no subtasks",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif not 0 <= sub_index - 1 < len(config['tasks'][main_index - 1]['subtasks']):
+            center_print(
+                f"Are you sure you gave me the correct task ({main_index}) and sub-task ({sub_index}) indices for the sub-task to delete?",
+                COLOR_WARNING,
+                wrap=True
+            )
+            return
+        else:
+            deleted_task = config['tasks'][main_index - 1]['subtasks'][sub_index - 1]
+            del config['tasks'][main_index - 1]['subtasks'][sub_index - 1]
+
     else:
-        deleted_task = config["tasks"][index]
-        del config["tasks"][index]
-        write_config(config)
-        center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
-        print_tasks(True)
+        index = index - 1
+
+        if not 0 <= index < len(config['tasks']):
+            center_print("Are you sure you gave me the correct number to delete?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        else:
+            deleted_task = config['tasks'][index]
+            del config['tasks'][index]
+    write_config(config)
+    center_print(f"Deleted '{deleted_task['name']}'", COLOR_SUCCESS)
+    print_tasks(True)
 
 
 @app.command(short_help="Mark a task as done")
-def do(index: int) -> None:
-    index = index - 1
-
-    if not 0 <= index < len(config["tasks"]):
-        center_print(
-            "Are you sure you gave me the correct number to mark as done?",
-            COLOR_WARNING,
-            wrap=True,
-        )
-        return
-
-    if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, There are no tasks to mark as done", COLOR_ERROR, wrap=True
-        )
-        return
-
-    if (config["tasks"][index]["done"] == True):
-        center_print("No Updates Made, Task Already Done",
-                     COLOR_INFO)
-        print_tasks()
+def do(index: str) -> None:
+    if len(config['tasks']) == 0:
+        center_print("Sorry, There are no tasks to mark as done",
+                     COLOR_ERROR,
+                     wrap=True)
         return
 
     if all_tasks_done():
         center_print("All tasks are already completed!", COLOR_SUCCESS)
         return
 
-    config["tasks"][index]["done"] = True
+    if index.isdigit():
+        index = int(index)
+
+    if isinstance(index, str):
+        main_index, sub_index = (int(it) for it in index.split('.'))
+
+        if not 0 <= main_index - 1 < len(config['tasks']):
+            center_print("Are you sure you gave me the correct index to mark as done ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif 'subtasks' not in config['tasks'][main_index - 1]:
+            center_print("Are you sure you gave me the correct index to mark as done ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif not 0 <= sub_index - 1 < len(config['tasks'][main_index - 1]['subtasks']):
+            center_print("Are you sure you gave me the correct index to mark as done ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        else:
+            if config['tasks'][main_index - 1]['subtasks'][sub_index - 1]['done']:
+                center_print("No Updates Made, Task Already Done",
+                             COLOR_INFO)
+                print_tasks(True)
+                return
+
+            config['tasks'][main_index - 1]['subtasks'][sub_index - 1]['done'] = True
+
+            all_subs_done = True
+            for sub_task in config['tasks'][main_index - 1]['subtasks']:
+                if not sub_task['done']:
+                    all_subs_done = False
+            if all_subs_done:
+                center_print("All sub tasks are done, marking main task as done.", COLOR_SUCCESS)
+                config['tasks'][main_index - 1]['done'] = True
+
+    else:
+        index = index - 1
+
+        if not 0 <= index < len(config['tasks']):
+            center_print("Are you sure you gave me the correct number to mark as done?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+
+        if config['tasks'][index]['done']:
+            center_print("No Updates Made, Task Already Done",
+                         COLOR_INFO)
+            print_tasks(True)
+            return
+
+        config['tasks'][index]['done'] = True
+
     write_config(config)
     center_print("Updated Task List", COLOR_SUCCESS)
-    print_tasks()
+    print_tasks(True)
 
 
 @app.command(short_help="Mark a task as undone")
-def undo(index: int) -> None:
-    index = index - 1
-
-    if not 0 <= index < len(config["tasks"]):
-        center_print(
-            "Are you sure you gave me the correct number to mark as undone?",
-            COLOR_WARNING,
-            wrap=True,
-        )
+def undo(index: str) -> None:
+    if len(config['tasks']) == 0:
+        center_print("Sorry, There are no tasks to mark as done",
+                     COLOR_ERROR,
+                     wrap=True)
         return
 
-    if len(config["tasks"]) == 0:
-        center_print(
-            "Sorry, There are no tasks to mark as undone", COLOR_INFO, wrap=True
-        )
-        return
+    if index.isdigit():
+        index = int(index)
 
-    if (config["tasks"][index]["done"] == False):
-        center_print("No Updates Made, Task Still Pending",
-                     COLOR_INFO)
-        print_tasks()
-        return
+    if isinstance(index, str):
+        main_index, sub_index = (int(it) for it in index.split('.'))
 
-    config["tasks"][index]["done"] = False
+        if not 0 <= main_index - 1 < len(config['tasks']):
+            center_print("Are you sure you gave me the correct index to mark as undone ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif 'subtasks' not in config['tasks'][main_index - 1]:
+            center_print("Are you sure you gave me the correct index to mark as undone ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        elif not 0 <= sub_index - 1 < len(config['tasks'][main_index - 1]['subtasks']):
+            center_print("Are you sure you gave me the correct index to mark as undone ?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        else:
+            if not config['tasks'][main_index - 1]['subtasks'][sub_index - 1]['done']:
+                center_print("No Updates Made, Task Still Pending",
+                             COLOR_INFO)
+                print_tasks(True)
+                return
+
+            config['tasks'][main_index - 1]['subtasks'][sub_index - 1]['done'] = False
+            if config['tasks'][main_index - 1]['done']:
+                center_print("As a sub task is now pending, marking main task as pending.", COLOR_SUCCESS)
+                config['tasks'][main_index - 1]['done'] = False
+
+    else:
+        index = index - 1
+
+        if not 0 <= index < len(config['tasks']):
+            center_print("Are you sure you gave me the correct number to mark as undone?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+
+        if not config['tasks'][index]['done']:
+            center_print("No Updates Made, Task Still Pending",
+                         COLOR_INFO)
+            print_tasks(True)
+            return
+
+        config['tasks'][index]['done'] = False
+
     write_config(config)
     center_print("Updated Task List", COLOR_SUCCESS)
-    print_tasks()
+    print_tasks(True)
 
 
 @app.command(short_help="Change task order")
-def move(old_index: int, new_index: int):
-    if (len(config["tasks"]) == 0):
-        center_print(
-            "Sorry, cannot move tasks as the Task list is empty", COLOR_ERROR
-        )
+def move(old_index: str, new_index: str):
+    if len(config['tasks']) == 0:
+        center_print("Sorry, cannot move tasks as the Task list is empty",
+                     COLOR_ERROR)
         return
 
-    try:
-        config["tasks"][old_index - 1], config["tasks"][new_index - 1] = (
-            config["tasks"][new_index - 1],
-            config["tasks"][old_index - 1],
-        )
-        write_config(config)
-        if old_index != new_index:
-            center_print("Updated Task List", COLOR_SUCCESS)
-        else:
-            center_print("No Updates Made", COLOR_INFO)
-        print_tasks(config["tasks"])
-    except:
-        center_print(
-            "Please check the entered index values", COLOR_WARNING
-        )
+    if old_index.isdigit():
+        old_index = int(old_index)
+    if new_index.isdigit():
+        new_index = int(new_index)
+
+    if isinstance(old_index, int) and isinstance(new_index, int):
+        try:
+            config['tasks'][old_index - 1], config['tasks'][new_index - 1] = (
+                config['tasks'][new_index - 1],
+                config['tasks'][old_index - 1],
+            )
+            write_config(config)
+            if old_index != new_index:
+                center_print("Updated Task List", COLOR_SUCCESS)
+            else:
+                center_print("No Updates Made", COLOR_INFO)
+            print_tasks(True)
+        except:
+            center_print("Please check the entered index values",
+                         COLOR_WARNING)
+            return
+    elif isinstance(old_index, str):
+        try:
+            main_index_old, sub_index_old = (int(it) for it in old_index.split('.'))
+            if isinstance(new_index, str):
+                main_index_new, sub_index_new = (int(it) for it in new_index.split('.'))
+                config['tasks'][main_index_new - 1]['subtasks'].insert(
+                    sub_index_new - 1,
+                    config['tasks'][main_index_old - 1]['subtasks'].pop(sub_index_old - 1)
+                )
+            else:
+                config['tasks'].insert(
+                    new_index - 1,
+                    config['tasks'][main_index_old - 1]['subtasks'].pop(sub_index_old - 1)
+                )
+            write_config(config)
+            print_tasks(True)
+        except:
+            center_print("Please check the entered index values",
+                         COLOR_WARNING)
+            return
+    elif isinstance(new_index, str):
+        try:
+            main_index_new, sub_index_new = (int(it) for it in new_index.split('.'))
+            if "subtasks" in config['tasks'][old_index - 1]:
+                center_print("Deeply nested subtasks are not yet supported.",
+                             COLOR_WARNING)
+                return
+            config['tasks'][main_index_new - 1]['subtasks'].insert(
+                sub_index_new - 1,
+                config['tasks'].pop(old_index - 1)
+            )
+            write_config(config)
+            print_tasks(True)
+        except:
+            center_print("Please check the entered index values",
+                         COLOR_WARNING)
+            return
+
 
 @app.command(short_help="Edit task name")
-def edit(index: int, new_name: str) -> None:
-    if not 0 <= index - 1 < len(config["tasks"]):
-        center_print(
-            "Are you sure you gave me the correct task number?",
-            COLOR_WARNING,
-            wrap=True,
-        )
+def edit(index: str, new_name: str) -> None:
+    if len(config['tasks']) == 0:
+        center_print("Sorry, cannot edit tasks as the Task list is empty", COLOR_ERROR)
         return
 
-    if (len(config["tasks"]) == 0):
-        center_print(
-            "Sorry, cannot edit tasks as the Task list is empty", COLOR_ERROR
-        )
+    if len(new_name) == 0:
+        center_print("Please enter a valid name", COLOR_ERROR)
         return
 
-    if (len(new_name) == 0):
-        center_print(
-            "Please enter a valid name", COLOR_ERROR
-        )
-        return
+    if index.isdigit():
+        index = int(index)
 
-    try:
-        old_name = config["tasks"][index - 1]["name"]
-        config["tasks"][index - 1]["name"] = new_name
-        write_config(config)
-        if old_name != new_name:
-            center_print("Updated Task Name", COLOR_SUCCESS)
-        else:
-            center_print("No Updates Made", COLOR_INFO)
-        print_tasks(config["tasks"])
-    except:
-        center_print(
-            "Please check the entered Task index and new Task name", COLOR_WARNING
-        )
+    if isinstance(index, int):
+        if not 0 <= index - 1 < len(config['tasks']):
+            center_print("Are you sure you gave me the correct task number?",
+                         COLOR_WARNING,
+                         wrap=True)
+            return
+        try:
+            old_name = config['tasks'][index - 1]["name"]
+            config['tasks'][index - 1]["name"] = new_name
+            write_config(config)
+            if old_name != new_name:
+                center_print("Updated Task Name", COLOR_SUCCESS)
+            else:
+                center_print("No Updates Made", COLOR_INFO)
+            print_tasks(True)
+            return
+        except:
+            center_print("Please check the entered Task index and new Task name", COLOR_WARNING)
+    elif isinstance(index, str):
+        try:
+            main_index, sub_index = (int(it) for it in index.split('.'))
+            old_name = config['tasks'][main_index - 1]['subtasks'][sub_index - 1]["name"]
+            config['tasks'][main_index - 1]['subtasks'][sub_index - 1]["name"] = new_name
+            write_config(config)
+            if old_name != new_name:
+                center_print("Updated Task Name", COLOR_SUCCESS)
+            else:
+                center_print("No Updates Made", COLOR_INFO)
+            print_tasks(True)
+            return
+        except:
+            center_print("Please check the entered Task index and new Task name", COLOR_WARNING)
+
 
 @app.command(short_help="Clean up tasks marked as done from the task list")
 def clean() -> None:
     res = []
-    for i in config['tasks']:
-        if i['done'] != True:
+    for i in clean_list(config['tasks']):
+        if 'subtasks' in i:
+            i['subtasks'] = [s for s in i['subtasks'] if not s['done']]
+        if not i['done']:
             res.append(i)
     if config['tasks'] != res:
         config['tasks'] = res
         write_config(config)
         center_print("Updated Task List", COLOR_SUCCESS)
-        print_tasks(config["tasks"])
+        print_tasks(True)
         return
     center_print("No Updates Made", COLOR_INFO)
-    print_tasks(config["tasks"])
+    print_tasks()
 
 
 @app.command(short_help="Toggle Time Format from 24 Hours to 12 Hours")
@@ -252,6 +440,7 @@ def changetimeformat() -> None:
     except:
         config["time_format_24h"] = False
     write_config(config)
+
 
 @app.command(short_help="Set a custom file to fetch quotes")
 def changequotes(quotes_file: str) -> None:
@@ -288,8 +477,8 @@ def changequotes(quotes_file: str) -> None:
     #Catch no file exception
     except FileNotFoundError:
         center_print(
-            "Sorry, the file was not found, ensure that you provided the full path\n of the JSON file and the file exists", COLOR_ERROR
-        )
+            "Sorry, the file was not found, ensure that you provided the full path\n of the JSON file and the file exists",
+            COLOR_ERROR)
     #Catch a bag JSON format exception
     except json.decoder.JSONDecodeError:
         center_print(
@@ -299,14 +488,16 @@ def changequotes(quotes_file: str) -> None:
 
 @app.command(short_help="Show all Tasks")
 def showtasks() -> None:
-    task_num = config["tasks"]
+    task_num = config['tasks']
     table1 = Table(
         title="Tasks",
         title_style="grey39",
         header_style="#e85d04",
-        style="#e85d04 bold",
+        style="#e85d04 bold"
     )
     table1.add_column("Number", style="#e85d04")
+    if config["hierarchical"] and not config["display_hierarchy"]:
+        table1.add_column("Has subtasks")
     table1.add_column("Task")
     table1.add_column("Status")
 
@@ -314,7 +505,89 @@ def showtasks() -> None:
         center_print(table1)
     else:
         for index, task in enumerate(task_num):
-            if task["done"]:
+
+            if task['done']:
+                task_name = f"[#A0FF55] {task['name']}[/]"
+                task_status = f'{config.get("done_icon", "✅")}'
+                task_index = f"[#A0FF55] {str(index + 1)} [/]"
+            else:
+                task_name = f"[#FF5555] {task['name']}[/]"
+                task_status = f'{config.get("notdone_icon", "❌")}'
+                task_index = f"[#FF5555] {str(index + 1)} [/]"
+
+            if config["hierarchical"] and not config["display_hierarchy"]:
+                if "subtasks" in task and len(task["subtasks"]) > 0:
+                    table1.add_row(task_index, f"{True}", task_name, task_status)
+                else:
+                    table1.add_row(task_index, f"{False}", task_name, task_status)
+            else:
+                table1.add_row(task_index, task_name, task_status)
+
+            if config["hierarchical"] and config["display_hierarchy"] and "subtasks" in task:
+                sub_table = Table(
+                    title="Sub-Tasks",
+                    title_style="grey39",
+                    header_style="#e85d04",
+                    style="#e85d04 bold"
+                )
+                sub_table.add_column("Number", style="#e85d04")
+                sub_table.add_column("Sub-Task")
+                sub_table.add_column("Status")
+                if len(task['subtasks']) > 0:
+                    for sub_idx, sub_task in enumerate(task['subtasks']):
+                        if sub_task['done']:
+                            sub_task_name = f"[#A0FF55] {sub_task['name']}[/]"
+                            sub_task_status = f'{config.get("done_icon", "✅")}'
+                            sub_task_index = f"[#A0FF55] {str(index + 1)}.{str(sub_idx + 1)} [/]"
+                        else:
+                            sub_task_name = f"[#FF5555] {sub_task['name']}[/]"
+                            sub_task_status = f'{config.get("notdone_icon", "❌")}'
+                            sub_task_index = f"[#FF5555] {str(index + 1)}.{str(sub_idx + 1)} [/]"
+
+                        sub_table.add_row(sub_task_index, sub_task_name, sub_task_status)
+
+                table1.add_row(None, sub_table, None)
+
+        center_print(table1)
+
+    if all_tasks_done():
+        center_print("[#61E294]Looking good, no pending tasks 😁[/]")
+
+
+@app.command(short_help="Display the children sub-tasks of a given parent task")
+def showsubtasks(parent_index: int) -> None:
+    try:
+        parent_task = config['tasks'][parent_index - 1]
+    except:
+        center_print("Are you sure you gave me the correct task number?",
+                     COLOR_WARNING,
+                     wrap=True)
+        return
+
+    try:
+        sub_tasks = parent_task['subtasks']
+    except KeyError:
+        center_print("The task doesn't have any sub-tasks",
+                     COLOR_WARNING,
+                     wrap=True)
+        return
+
+    table1 = Table(
+        title=f"Sub-Tasks of task {parent_task['name']}",
+        title_style="grey39",
+        header_style="#e85d04",
+        style="#e85d04 bold",
+    )
+    table1.add_column("Number", style="#e85d04")
+    table1.add_column("Sub-Task")
+    table1.add_column("Status")
+
+    if len(sub_tasks) == 0:
+        center_print(table1)
+    else:
+        for index, task in enumerate(sub_tasks):
+
+            if task['done']:
                 task_name = f"[#A0FF55] {task['name']}[/]"
                 task_status = f'{config.get("done_icon", "✅")}'
                 task_index = f"[#A0FF55] {str(index + 1)} [/]"
@@ -324,9 +597,10 @@ def showtasks() -> None:
                 task_index = f"[#FF5555] {str(index + 1)} [/]"
 
             table1.add_row(task_index, task_name, task_status)
+
         center_print(table1)
 
-    if(all_tasks_done()):
+    if all_tasks_done():
         center_print("[#61E294]Looking good, no pending tasks 😁[/]")
 
 
@@ -366,13 +640,15 @@ def setup() -> None:
     center_print("If you wanna change your name later, please use:", "red")
     console.print(code_markdown)
 
-    #Get location
+    # Get location
     __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__))
     )
 
     config["initial_setup_done"] = True
-    config["tasks"] = []
+    config['tasks'] = []
+    config["hierarchical"] = False
+    config["display_hierarchy"] = False
     config["disable_line"] = False
     config["disable_quotes"] = False
     config["disable_greeting"] = False
