@@ -13,7 +13,8 @@ keywords = ["please", "cli", "new tab"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-typer = "^0.4.1"
+typer = "^0.4.1, <0.16"
+click = "^8.0.4, <8.1.0"
 rich = "^12.3.0"
 
 [tool.poetry.dev-dependencies]
